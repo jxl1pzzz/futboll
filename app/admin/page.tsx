@@ -30,6 +30,7 @@ interface User {
 
 export default function AdminDashboard() {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const [users, setUsers] = useState<User[]>([
     {
       id: 1,
@@ -99,17 +100,26 @@ export default function AdminDashboard() {
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [newUser, setNewUser] = useState({ name: "", email: "", role: "Jugador" })
 
+  // Marcar como montado
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+
     const userType = localStorage.getItem("userType")
     if (userType !== "admin") {
       router.push("/")
     }
-  }, [router])
+  }, [router, mounted])
 
   const handleLogout = () => {
-    localStorage.removeItem("userType")
-    localStorage.removeItem("userEmail")
-    router.push("/")
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("userType")
+      localStorage.removeItem("userEmail")
+      router.push("/")
+    }
   }
 
   const handleDeleteUser = (id: number) => {
@@ -143,8 +153,20 @@ export default function AdminDashboard() {
     }
   }
 
+  // Si no está montado, mostrar loading
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando panel administrativo...</p>
+        </div>
+      </div>
+    )
+  }
+
   const activeUsers = users.filter((user) => user.status === "Activo").length
-  const totalRevenue = users.filter((user) => user.status === "Activo").length * 50000 // $50,000 por usuario activo
+  const totalRevenue = users.filter((user) => user.status === "Activo").length * 50000
   const recentPayments = users.filter((user) => new Date(user.lastPayment) > new Date("2024-11-01")).length
 
   return (
